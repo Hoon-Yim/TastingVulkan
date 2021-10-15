@@ -6,7 +6,7 @@
 /dataSources.local.xml
 # Editor-based HTTP Client requests
 /httpRequests/
-/Users/hoon/CLionProjects/VulkanTutorial/.git
-/Users/hoon/CLionProjects/VulkanTutorial/.idea
-/Users/hoon/CLionProjects/VulkanTutorial/cmake-build-debug
+.git
+.idea
+cmake-build-debug/
 
