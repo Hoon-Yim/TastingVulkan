@@ -1,9 +1,21 @@
+#include <iostream>
+#include <cstdlib>
+
 #include "VeApplication.h"
 
 int main()
 {
     ve::VeApplication application;
-    application.Run();
 
-    return 0;
+    try
+    {
+        application.Run();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }

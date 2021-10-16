@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VeWindow.h"
+#include "VeDevice.h"
 
 namespace ve
 {
@@ -11,7 +12,8 @@ namespace ve
         static constexpr int HEIGHT = 600;
 
     private:
-        VeWindow window {WIDTH, HEIGHT, "Triangle"};
+        VeWindow window {WIDTH, HEIGHT, "TastingVulkan"};
+        VeDevice device;
 
     public:
         void Run();

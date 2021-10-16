@@ -1,9 +1,12 @@
 #include "VeApplication.h"
 
-void ve::VeApplication::Run()
+namespace ve
 {
-    while(!window.ShouldClose())
+    void VeApplication::Run()
     {
-        glfwPollEvents();
+        while(!window.ShouldClose())
+        {
+            glfwPollEvents();
+        }
     }
 }
