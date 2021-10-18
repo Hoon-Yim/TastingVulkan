@@ -114,6 +114,32 @@ namespace ve
         createInfo.pfnUserCallback = DebugCallback;
         createInfo.pUserData = nullptr;
     }
+
+    bool VeDevice::isDeviceSuitable(VkPhysicalDevice device)
+    {
+        QueueFamilyIndices indices = findQueueFamilies(device);
+
+        return indices.IsComplete();
+    }
+
+    QueueFamilyIndices VeDevice::findQueueFamilies(VkPhysicalDevice device)
+    {
+        QueueFamilyIndices indices;
+        uint32_t queueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+        int i = 0;
+        for (const VkQueueFamilyProperties& properties : queueFamilies)
+        {
+            if (properties.queueFlags & VK_QUEUE_GRAPHICS_BIT) { indices.GraphicsFamily = i; }
+            if (indices.IsComplete()) { break; }
+            ++i;
+        }
+
+        return indices;
+    }
     // helper
 
     // private..
@@ -173,6 +199,70 @@ namespace ve
             throw std::runtime_error("failed to set up debug messenger!");
         }
     }
+
+    void VeDevice::pickPhysicalDevice()
+    {
+        uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(mInstance, &deviceCount, nullptr);
+        if (deviceCount == 0)
+        {
+            throw std::runtime_error("failed to find GPUs with vulkan support!");
+        }
+        std::cout << "Device Count: " << deviceCount << '\n';
+        std::vector<VkPhysicalDevice> devices(deviceCount);
+        vkEnumeratePhysicalDevices(mInstance, &deviceCount, devices.data());
+
+        for (VkPhysicalDevice device : devices)
+        {
+            if (isDeviceSuitable(device))
+            {
+                mPhysicalDevice = device;
+                break;
+            }
+        }
+
+        if (mPhysicalDevice == VK_NULL_HANDLE)
+        {
+            throw std::runtime_error("failed to find a suitable GPU!");
+        }
+
+        vkGetPhysicalDeviceProperties(mPhysicalDevice, &mPhysicalDeviceProperties);
+        std::cout << "Suitable Physical Device: " << mPhysicalDeviceProperties.deviceName << '\n';
+    }
+
+    void VeDevice::createLogicalDevice()
+    {
+        QueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice);
+        float queuePriority = 1.0f;
+
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = indices.GraphicsFamily.value();
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+
+        VkPhysicalDeviceFeatures deviceFeatures{};
+
+        VkDeviceCreateInfo deviceCreateInfo{};
+        deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        deviceCreateInfo.queueCreateInfoCount = 1;
+        deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+        deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+        deviceCreateInfo.enabledExtensionCount  = 0;
+        if (enabledValidationLayer)
+        {
+            deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(mValidationLayers.size());
+            deviceCreateInfo.ppEnabledLayerNames = mValidationLayers.data();
+        }
+        else { deviceCreateInfo.enabledLayerCount = 0; }
+
+        if (vkCreateDevice(mPhysicalDevice, &deviceCreateInfo, nullptr, &mDevice) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create logical device!");
+        }
+
+        vkGetDeviceQueue(mDevice, indices.GraphicsFamily.value(), 0, &mGraphicsQueue);
+    }
     // private
 
     // public..
@@ -180,10 +270,13 @@ namespace ve
     {
         createInstance();
         setupDebugMessenger();
+        pickPhysicalDevice();
+        createLogicalDevice();
     }
 
     VeDevice::~VeDevice()
     {
+        vkDestroyDevice(mDevice, nullptr);
         if (enabledValidationLayer) { DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr); }
         vkDestroyInstance(mInstance, nullptr);
     }
