@@ -280,5 +280,6 @@ namespace ve
         if (enabledValidationLayer) { DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr); }
         vkDestroyInstance(mInstance, nullptr);
     }
+
     // public
 }
