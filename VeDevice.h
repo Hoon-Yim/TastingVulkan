@@ -1,15 +1,24 @@
 #pragma once
 
+#include <algorithm>
+#include <cstdint>
 #include <iostream>
-#include <vector>
+#include <optional>
 #include <set>
 #include <unordered_set>
-#include <optional>
+#include <vector>
 
 #include "VeWindow.h"
 
 namespace ve
 {
+    struct SwapChainSupportDetails
+    {
+        VkSurfaceCapabilitiesKHR Capabilities;
+        std::vector<VkSurfaceFormatKHR> Formats;
+        std::vector<VkPresentModeKHR> PresentModes;
+    };
+
     struct QueueFamilyIndices
     {
         std::optional<uint32_t> GraphicsFamily;
@@ -36,6 +45,7 @@ namespace ve
         VkQueue mPresentQueue;
 
         const std::vector<const char*> mValidationLayers { "VK_LAYER_KHRONOS_validation" };
+        const std::vector<const char*> mDeviceExtensions { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
     private:
         void createInstance();
@@ -51,7 +61,9 @@ namespace ve
         bool checkValidationLayerSupport();
         void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
         bool isDeviceSuitable(VkPhysicalDevice device);
+        bool checkDeviceExtensionSupport(VkPhysicalDevice device);
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice physicalDevice);
+        SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
     public:
         #ifdef NDEBUG

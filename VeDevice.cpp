@@ -119,7 +119,37 @@ namespace ve
     {
         QueueFamilyIndices indices = findQueueFamilies(device);
 
-        return indices.IsComplete();
+        bool extensionSupported = checkDeviceExtensionSupport(device);
+        bool swapChainAdequate = false;
+        if (extensionSupported)
+        {
+            SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+            swapChainAdequate = !swapChainSupport.Formats.empty() && !swapChainSupport.PresentModes.empty();
+        }
+
+        return indices.IsComplete() && extensionSupported && swapChainAdequate;
+    }
+
+    bool VeDevice::checkDeviceExtensionSupport(VkPhysicalDevice device)
+    {
+        uint32_t extensionCount;
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+        vkEnumerateDeviceExtensionProperties(
+                device,
+                nullptr,
+                &extensionCount,
+                availableExtensions.data());
+
+        std::set<std::string> requiredExtensions(mDeviceExtensions.begin(), mDeviceExtensions.end());
+
+        for (const auto &extension : availableExtensions)
+        {
+            requiredExtensions.erase(extension.extensionName);
+        }
+
+        return requiredExtensions.empty();
     }
 
     QueueFamilyIndices VeDevice::findQueueFamilies(VkPhysicalDevice device)
@@ -261,7 +291,8 @@ namespace ve
         deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
-        deviceCreateInfo.enabledExtensionCount  = 0;
+        deviceCreateInfo.enabledExtensionCount  = static_cast<uint32_t>(mDeviceExtensions.size());
+        deviceCreateInfo.ppEnabledExtensionNames = mDeviceExtensions.data();
         if (enabledValidationLayer)
         {
             deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(mValidationLayers.size());
@@ -277,6 +308,31 @@ namespace ve
         vkGetDeviceQueue(mDevice, indices.GraphicsFamily.value(), 0, &mGraphicsQueue);
         vkGetDeviceQueue(mDevice, indices.PresentFamily.value(), 0, &mPresentQueue);
     }
+
+    SwapChainSupportDetails VeDevice::querySwapChainSupport(VkPhysicalDevice device)
+    {
+        SwapChainSupportDetails details;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, mSurface, &details.Capabilities);
+
+        uint32_t formatCount;
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, nullptr);
+        if (formatCount != 0)
+        {
+            details.Formats.resize(formatCount);
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, details.Formats.data());
+        }
+
+        uint32_t presentModeCount;
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, nullptr);
+        if (presentModeCount != 0)
+        {
+            details.PresentModes.resize(presentModeCount);
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, details.PresentModes.data());
+        }
+
+        return details;
+    }
+
     // private
 
     // public..
