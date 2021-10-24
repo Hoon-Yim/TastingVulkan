@@ -2,9 +2,9 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
 #include <unordered_set>
 #include <optional>
-#include <vulkan/vulkan.h>
 
 #include "VeWindow.h"
 
@@ -13,19 +13,25 @@ namespace ve
     struct QueueFamilyIndices
     {
         std::optional<uint32_t> GraphicsFamily;
+        std::optional<uint32_t> PresentFamily;
 
-        bool IsComplete() { return GraphicsFamily.has_value(); }
+        bool IsComplete()
+        {
+            return GraphicsFamily.has_value() && PresentFamily.has_value();
+        }
     };
 
     class VeDevice
     {
     private:
+        VeWindow mWindow;
         VkInstance mInstance;
         VkDebugUtilsMessengerEXT mDebugMessenger;
-
         VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;
         VkPhysicalDeviceProperties mPhysicalDeviceProperties;
+
         VkDevice mDevice;
+        VkSurfaceKHR mSurface;
         VkQueue mGraphicsQueue;
         VkQueue mPresentQueue;
 
@@ -34,6 +40,7 @@ namespace ve
     private:
         void createInstance();
         void setupDebugMessenger();
+        void createSurface();
         void pickPhysicalDevice();
         void createLogicalDevice();
 
@@ -53,7 +60,7 @@ namespace ve
             const bool enabledValidationLayer = true;
         #endif
 
-        VeDevice();
+        VeDevice(VeWindow& window);
         ~VeDevice();
     };
 }

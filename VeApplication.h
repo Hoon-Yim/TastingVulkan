@@ -13,7 +13,7 @@ namespace ve
 
     private:
         VeWindow window {WIDTH, HEIGHT, "TastingVulkan"};
-        VeDevice device;
+        VeDevice device{window};
 
     public:
         void Run();

@@ -17,4 +17,12 @@ namespace ve
     }
 
     bool VeWindow::ShouldClose() { return glfwWindowShouldClose(mWindow); }
+
+    void VeWindow::CreateWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
+    {
+        if (glfwCreateWindowSurface(instance, mWindow, nullptr, surface) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create mWindow surface!");
+        }
+    }
 }

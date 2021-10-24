@@ -134,6 +134,9 @@ namespace ve
         for (const VkQueueFamilyProperties& properties : queueFamilies)
         {
             if (properties.queueFlags & VK_QUEUE_GRAPHICS_BIT) { indices.GraphicsFamily = i; }
+            VkBool32 presentSupport = false;
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, mSurface, &presentSupport);
+            if (presentSupport) { indices.PresentFamily = i; }
             if (indices.IsComplete()) { break; }
             ++i;
         }
@@ -200,6 +203,8 @@ namespace ve
         }
     }
 
+    void VeDevice::createSurface() { mWindow.CreateWindowSurface(mInstance, &mSurface); }
+
     void VeDevice::pickPhysicalDevice()
     {
         uint32_t deviceCount = 0;
@@ -233,20 +238,28 @@ namespace ve
     void VeDevice::createLogicalDevice()
     {
         QueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice);
+
+        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+        std::set<uint32_t> uniqueQueueFamilies = {indices.GraphicsFamily.value(), indices.PresentFamily.value()};
+
         float queuePriority = 1.0f;
 
-        VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = indices.GraphicsFamily.value();
-        queueCreateInfo.queueCount = 1;
-        queueCreateInfo.pQueuePriorities = &queuePriority;
+        for (uint32_t queueFamily : uniqueQueueFamilies)
+        {
+            VkDeviceQueueCreateInfo queueCreateInfo{};
+            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queueCreateInfo.queueFamilyIndex = indices.GraphicsFamily.value();
+            queueCreateInfo.queueCount = 1;
+            queueCreateInfo.pQueuePriorities = &queuePriority;
+            queueCreateInfos.push_back(queueCreateInfo);
+        }
 
         VkPhysicalDeviceFeatures deviceFeatures{};
 
         VkDeviceCreateInfo deviceCreateInfo{};
         deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        deviceCreateInfo.queueCreateInfoCount = 1;
-        deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+        deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+        deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
         deviceCreateInfo.enabledExtensionCount  = 0;
         if (enabledValidationLayer)
@@ -262,14 +275,16 @@ namespace ve
         }
 
         vkGetDeviceQueue(mDevice, indices.GraphicsFamily.value(), 0, &mGraphicsQueue);
+        vkGetDeviceQueue(mDevice, indices.PresentFamily.value(), 0, &mPresentQueue);
     }
     // private
 
     // public..
-    VeDevice::VeDevice()
+    VeDevice::VeDevice(VeWindow& window) : mWindow{window}
     {
         createInstance();
         setupDebugMessenger();
+        createSurface();
         pickPhysicalDevice();
         createLogicalDevice();
     }
@@ -278,9 +293,8 @@ namespace ve
     {
         vkDestroyDevice(mDevice, nullptr);
         if (enabledValidationLayer) { DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr); }
+        vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
         vkDestroyInstance(mInstance, nullptr);
     }
-
-
     // public
 }

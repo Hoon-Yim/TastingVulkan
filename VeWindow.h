@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 
 namespace ve
@@ -16,5 +17,6 @@ namespace ve
         ~VeWindow();
 
         bool ShouldClose();
+        void CreateWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
     };
 }
