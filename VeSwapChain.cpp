@@ -91,11 +91,35 @@ namespace ve
         }
 
         vkGetSwapchainImagesKHR(mDevice.GetDevice(), mSwapChain, &imageCount, nullptr);
-        std::vector<VkImage> swapChainImages(imageCount);
-        vkGetSwapchainImagesKHR(mDevice.GetDevice(), mSwapChain, &imageCount, swapChainImages.data());
+        mSwapChainImages.resize(imageCount);
+        vkGetSwapchainImagesKHR(mDevice.GetDevice(), mSwapChain, &imageCount, mSwapChainImages.data());
 
         mSwapChainImageFormat = surfaceFormat.format;
         mSwapChainExtent = extent;
+    }
+
+    void VeSwapChain::createImageViews()
+    {
+        mSwapChainImageViews.resize(mSwapChainImages.size());
+
+        for (size_t i = 0; i < mSwapChainImages.size(); i++)
+        {
+            VkImageViewCreateInfo createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            createInfo.image = mSwapChainImages[i];
+            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            createInfo.format = mSwapChainImageFormat;
+            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            createInfo.subresourceRange.baseMipLevel = 0;
+            createInfo.subresourceRange.levelCount = 1;
+            createInfo.subresourceRange.baseArrayLayer = 0;
+            createInfo.subresourceRange.layerCount = 1;
+
+            if (vkCreateImageView(mDevice.GetDevice(), &createInfo, nullptr, &mSwapChainImageViews[i]) != VK_SUCCESS)
+            {
+                throw std::runtime_error("failed to create texture image view!");
+            }
+        }
     }
     // private
 
@@ -108,6 +132,12 @@ namespace ve
 
     VeSwapChain::~VeSwapChain()
     {
+        for (VkImageView imageView : mSwapChainImageViews)
+        {
+            vkDestroyImageView(mDevice.GetDevice(), imageView, nullptr);
+        }
+        mSwapChainImageViews.clear();
+
         if (mSwapChain != nullptr)
         {
             vkDestroySwapchainKHR(mDevice.GetDevice(), mSwapChain, nullptr);

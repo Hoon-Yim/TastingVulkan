@@ -14,6 +14,9 @@ namespace ve
         VkFormat mSwapChainImageFormat;
         VkExtent2D mSwapChainExtent;
 
+        std::vector<VkImage> mSwapChainImages;
+        std::vector<VkImageView> mSwapChainImageViews;
+
     // helper functions
     private:
         VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
@@ -22,6 +25,7 @@ namespace ve
 
     private:
         void createSwapChain();
+        void createImageViews();
 
     public:
         VeSwapChain(VeDevice& device, VkExtent2D windowExtent);
