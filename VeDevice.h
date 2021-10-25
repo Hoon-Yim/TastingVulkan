@@ -47,13 +47,6 @@ namespace ve
         const std::vector<const char*> mValidationLayers { "VK_LAYER_KHRONOS_validation" };
         const std::vector<const char*> mDeviceExtensions { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-    private:
-        void createInstance();
-        void setupDebugMessenger();
-        void createSurface();
-        void pickPhysicalDevice();
-        void createLogicalDevice();
-
     // helper functions
     private:
         std::vector<const char*> getRequiredExtensions();
@@ -65,6 +58,13 @@ namespace ve
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice physicalDevice);
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
+    private:
+        void createInstance();
+        void setupDebugMessenger();
+        void createSurface();
+        void pickPhysicalDevice();
+        void createLogicalDevice();
+
     public:
         #ifdef NDEBUG
             const bool enabledValidationLayer = false;
@@ -74,5 +74,10 @@ namespace ve
 
         VeDevice(VeWindow& window);
         ~VeDevice();
+
+        VkDevice GetDevice() { return mDevice; }
+        QueueFamilyIndices GetQueueFamilies() { return findQueueFamilies(mPhysicalDevice); }
+        SwapChainSupportDetails GetSwapChainSupport() { return querySwapChainSupport(mPhysicalDevice); }
+        VkSurfaceKHR GetSurface() { return mSurface; }
     };
 }

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "VeWindow.h"
 #include "VeDevice.h"
+#include "VeSwapChain.h"
+#include "VeWindow.h"
 
 namespace ve
 {
@@ -14,6 +15,7 @@ namespace ve
     private:
         VeWindow window {WIDTH, HEIGHT, "TastingVulkan"};
         VeDevice device{window};
+        VeSwapChain swapChain{device, window.GetExtent()};
 
     public:
         void Run();

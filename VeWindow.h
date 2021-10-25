@@ -11,6 +11,8 @@ namespace ve
     {
     private:
         GLFWwindow* mWindow;
+        const int mWIDTH;
+        const int mHEIGHT;
 
     public:
         VeWindow(int width, int height, const char* title);
@@ -18,5 +20,10 @@ namespace ve
 
         bool ShouldClose();
         void CreateWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
+
+        VkExtent2D GetExtent()
+        {
+            return {static_cast<uint32_t>(mWIDTH), static_cast<uint32_t>(mHEIGHT)};
+        }
     };
 }
